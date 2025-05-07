@@ -15,20 +15,25 @@ datasource db {
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  content   String
-  published Boolean  @default(false)
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  content      String
+  likes        Int      @default(0)
+  published    Boolean  @default(true)
+  author       User     @relation(fields: [authorId], references: [id])
+  authorId     Int
+  parentPost   Post?    @relation("PostReplies", fields: [parentPostId], references: [id])
+  parentPostId Int?
+  replies      Post[]   @relation("PostReplies")
 }
 
 model Profile {
-  id     Int     @id @default(autoincrement())
-  bio    String?
-  user   User    @relation(fields: [userId], references: [id])
-  userId Int     @unique
+  id       Int     @id @default(autoincrement())
+  bio      String?
+  imageUrl String?
+  user     User    @relation(fields: [userId], references: [id])
+  userId   Int     @unique
 }
 
 model User {

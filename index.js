@@ -11,6 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(import.meta.dirname, "public")));
 app.use(cors());
 
+app.use(routes.authRouter);
 
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;

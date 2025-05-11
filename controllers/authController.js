@@ -1,7 +1,7 @@
 import { body, validationResult } from "express-validator";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/index.js";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -29,8 +29,8 @@ const userSignUp = [
     if (!errors.isEmpty()) {
       return res.status(409).send({ errors: errors.array() });
     }
-    const { name, email } = req.body;
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const { name, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.create({
       data: {
         name,

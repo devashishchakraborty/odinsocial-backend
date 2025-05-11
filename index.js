@@ -23,6 +23,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Blog API listening on port ${port}`);
 });

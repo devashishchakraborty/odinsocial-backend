@@ -40,7 +40,8 @@ model Profile {
 model User {
   id              Int      @id @default(autoincrement())
   email           String   @unique
-  name            String?
+  name            String
+  password        String
   posts           Post[]
   profile         Profile?
   bookmarkedPosts Post[]   @relation("Bookmarks")

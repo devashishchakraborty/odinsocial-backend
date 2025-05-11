@@ -58,7 +58,7 @@ const userLogin = asyncHandler(async (req, res) => {
       profile: true,
     },
   });
-  
+
   if (!user) return res.status(400).send({ error: "Email not found!" });
 
   const match = await bcrypt.compare(password, user.password);
@@ -68,6 +68,7 @@ const userLogin = asyncHandler(async (req, res) => {
     id: user.id,
     email: user.email,
     name: user.name,
+    profile: user.profile,
   };
   const token = jwt.sign(payload, "process.env.ACCESS_TOKEN_SECRET", {
     expiresIn: "30d",

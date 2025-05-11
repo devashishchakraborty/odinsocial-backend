@@ -1,6 +1,8 @@
 import express from "express";
 import path from "path";
 import cors from "cors";
+import authenticateJWT from "./middlewares/authenticateJWT.js";
+import routes from "./routes/index.js";
 import "dotenv/config";
 
 const app = express();
@@ -12,6 +14,7 @@ app.use(express.static(path.join(import.meta.dirname, "public")));
 app.use(cors());
 
 app.use(routes.authRouter);
+app.use("/posts", authenticateJWT, routes.postRouter)
 
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;

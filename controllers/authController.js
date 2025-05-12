@@ -3,6 +3,7 @@ import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "../generated/prisma/index.js";
 import bcrypt from "bcryptjs";
+import "dotenv/config";
 
 const prisma = new PrismaClient();
 const validateSignUp = [
@@ -70,7 +71,7 @@ const userLogin = asyncHandler(async (req, res) => {
     name: user.name,
     profile: user.profile,
   };
-  const token = jwt.sign(payload, "process.env.ACCESS_TOKEN_SECRET", {
+  const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: "30d",
   });
   return res.send({ token });

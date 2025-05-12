@@ -45,4 +45,16 @@ model User {
   posts           Post[]
   profile         Profile?
   bookmarkedPosts Post[]   @relation("Bookmarks")
+  following       Follow[] @relation("FollowingRelation")
+  followers       Follow[] @relation("FollowerRelation")
+}
+
+model Follow {
+  id          Int  @id @default(autoincrement())
+  follower    User @relation("FollowingRelation", fields: [followerId], references: [id])
+  followerId  Int
+  following   User @relation("FollowerRelation", fields: [followingId], references: [id])
+  followingId Int
+
+  @@unique([followerId, followingId])
 }

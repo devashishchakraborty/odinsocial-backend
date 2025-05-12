@@ -1,9 +1,9 @@
 import postRouter from "./postRouter.js";
-import profileRouter from "./profileRouter.js";
+import userRouter from "./userRouter.js";
 import authRouter from "./authRouter.js";
 
 export default {
   authRouter,
   postRouter,
-  profileRouter
+  userRouter
 };

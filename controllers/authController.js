@@ -1,9 +1,13 @@
 import { body, validationResult } from "express-validator";
 import asyncHandler from "express-async-handler";
-import jwt from "jsonwebtoken";
 import { PrismaClient } from "../generated/prisma/index.js";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../utils/tokenUtils.js";
 
 const prisma = new PrismaClient();
 const validateSignUp = [
@@ -49,6 +53,8 @@ const userSignUp = [
   }),
 ];
 
+let refreshTokens = []; // In production, store in DB or Redis
+
 const userLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const user = await prisma.user.findUnique({
@@ -71,13 +77,44 @@ const userLogin = asyncHandler(async (req, res) => {
     name: user.name,
     profile: user.profile,
   };
-  const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "30d",
+
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+
+  refreshTokens.push(refreshToken);
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 7 days
   });
-  return res.send({ token });
+
+  return res.send({ accessToken });
 });
+
+const refreshToken = (req, res) => {
+  const token = req.cookies.refreshToken;
+  if (!token) return res.sendStatus(401);
+  if (!refreshTokens.includes(token)) return res.sendStatus(403);
+
+  jwt.verify(token, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    const accessToken = generateAccessToken({ username: user.username });
+    res.json({ accessToken });
+  });
+};
+
+const userLogout = (req, res) => {
+  const token = req.cookies.refreshToken;
+  refreshTokens = refreshTokens.filter(t => t !== token);
+  res.clearCookie("refreshToken");
+  res.sendStatus(204);
+}
 
 export default {
   userLogin,
   userSignUp,
+  refreshToken,
+  userLogout
 };

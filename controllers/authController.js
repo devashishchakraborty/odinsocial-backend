@@ -8,6 +8,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/tokenUtils.js";
+import redisClient from "../config/redisClient.js";
 
 const prisma = new PrismaClient();
 const validateSignUp = [
@@ -81,7 +82,9 @@ const userLogin = asyncHandler(async (req, res) => {
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
-  refreshTokens.push(refreshToken);
+  await redisClient.set(`refreshToken:${user.id}`, refreshToken, {
+    EX: 30 * 24 * 60 * 60, // 30 days in seconds
+  });
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
@@ -93,28 +96,29 @@ const userLogin = asyncHandler(async (req, res) => {
   return res.send({ accessToken });
 });
 
-const refreshToken = (req, res) => {
-  const token = req.cookies.refreshToken;
-  if (!token) return res.sendStatus(401);
-  if (!refreshTokens.includes(token)) return res.sendStatus(403);
+const refreshToken = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) return res.sendStatus(401);
 
-  jwt.verify(token, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+  const storedToken = await redisClient.get(`refreshToken:${req.user.id}`);
+  if (!storedToken || storedToken !== refreshToken) return res.sendStatus(403);
+
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
     if (err) return res.sendStatus(403);
-    const accessToken = generateAccessToken({ username: user.username });
+    const accessToken = generateAccessToken(user);
     res.json({ accessToken });
   });
 };
 
-const userLogout = (req, res) => {
-  const token = req.cookies.refreshToken;
-  refreshTokens = refreshTokens.filter(t => t !== token);
+const userLogout = async (req, res) => {
+  await redisClient.del(`refreshToken:${req.user.id}`);
   res.clearCookie("refreshToken");
   res.sendStatus(204);
-}
+};
 
 export default {
   userLogin,
   userSignUp,
   refreshToken,
-  userLogout
+  userLogout,
 };

@@ -23,10 +23,17 @@ model Post {
   published    Boolean  @default(true)
   author       User     @relation(fields: [authorId], references: [id])
   authorId     Int
-  parentPost   Post?    @relation("PostReplies", fields: [parentPostId], references: [id])
   parentPostId Int?
+  parentPost   Post?    @relation("PostReplies", fields: [parentPostId], references: [id])
   replies      Post[]   @relation("PostReplies")
+  RootPostId   Int?
+  RootPost     Post?    @relation("PostToRoot", fields: [RootPostId], references: [id])
+  thread       Post[]   @relation("PostToRoot")
+  isThread     Boolean  @default(false)
   bookmarkedBy User[]   @relation("Bookmarks")
+
+  @@index([parentPostId])
+  @@index([RootPostId])
 }
 
 model Profile {

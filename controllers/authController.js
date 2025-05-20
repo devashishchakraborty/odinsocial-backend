@@ -74,10 +74,12 @@ const userLogin = asyncHandler(async (req, res) => {
     id: user.id,
     email: user.email,
     name: user.name,
-    profile: user.profile,
   };
 
-  const accessToken = generateAccessToken(payload);
+  const accessToken = generateAccessToken({
+    ...payload,
+    profile: user.profile,
+  });
   const refreshToken = generateRefreshToken(payload);
 
   await redisClient.set(`refreshToken:${user.id}`, refreshToken, {
@@ -88,7 +90,7 @@ const userLogin = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
   return res.send({ accessToken });
@@ -98,7 +100,9 @@ const refreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) return res.sendStatus(401);
 
-  const storedToken = await redisClient.get(`refreshToken:${req.user.id}`);
+  const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+  const storedToken = await redisClient.get(`refreshToken:${decoded.id}`);
   if (!storedToken || storedToken !== refreshToken) return res.sendStatus(403);
 
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {

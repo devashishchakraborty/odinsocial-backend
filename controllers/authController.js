@@ -96,21 +96,24 @@ const userLogin = asyncHandler(async (req, res) => {
   return res.send({ accessToken });
 });
 
-const refreshToken = async (req, res) => {
+const refreshToken = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) return res.sendStatus(401);
 
   const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-
   const storedToken = await redisClient.get(`refreshToken:${decoded.id}`);
   if (!storedToken || storedToken !== refreshToken) return res.sendStatus(403);
 
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
     if (err) return res.sendStatus(403);
-    const accessToken = generateAccessToken(user);
-    res.json({ accessToken });
+    const accessToken = generateAccessToken({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    });
+    return res.send({ token: accessToken });
   });
-};
+});
 
 const userLogout = async (req, res) => {
   await redisClient.del(`refreshToken:${req.user.id}`);

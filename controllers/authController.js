@@ -111,7 +111,7 @@ const refreshToken = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
     });
-    return res.send({ token: accessToken });
+    return res.send({ accessToken });
   });
 });
 

@@ -4,6 +4,17 @@ const prisma = new PrismaClient();
 
 const getPosts = async (req, res) => {
   const posts = await prisma.post.findMany({
+    include: {
+      author: {
+        include: {
+          profile: {
+            select: {
+              imageUrl: true,
+            },
+          },
+        },
+      },
+    },
     orderBy: {
       createdAt: "desc",
     },

@@ -19,7 +19,6 @@ model Post {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   content      String
-  likes        Int      @default(0)
   published    Boolean  @default(true)
   author       User     @relation(fields: [authorId], references: [id])
   authorId     Int
@@ -31,6 +30,7 @@ model Post {
   thread       Post[]   @relation("PostToRoot")
   isThread     Boolean  @default(false)
   bookmarkedBy User[]   @relation("Bookmarks")
+  likedBy      User[]   @relation("Likes")
 
   @@index([parentPostId])
   @@index([RootPostId])
@@ -52,6 +52,7 @@ model User {
   posts           Post[]
   profile         Profile?
   bookmarkedPosts Post[]   @relation("Bookmarks")
+  likedPosts      Post[]   @relation("Likes")
   following       Follow[] @relation("FollowingRelation")
   followers       Follow[] @relation("FollowerRelation")
 }

@@ -5,8 +5,16 @@ const prisma = new PrismaClient();
 const getPosts = async (req, res) => {
   const posts = await prisma.post.findMany({
     include: {
+      likedBy: {
+        select: {
+          id: true,
+        },
+      },
       author: {
-        include: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
           profile: {
             select: {
               imageUrl: true,

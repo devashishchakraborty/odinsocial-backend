@@ -10,6 +10,12 @@ const getPosts = async (req, res) => {
           id: true,
         },
       },
+      bookmarkedBy: {
+        select: {
+          id: true,
+        },
+      },
+
       author: {
         select: {
           id: true,
@@ -33,6 +39,39 @@ const getPosts = async (req, res) => {
   }
 
   res.send(posts);
+};
+
+const updatePost = async (req, res) => {
+  const { postId } = req.params;
+  const { userId, isLiked, isBookmarked } = req.body;
+  let action = {};
+
+  if (isLiked) {
+    action.likedBy =
+      isLiked === "true"
+        ? { connect: { id: parseInt(userId) } }
+        : { disconnect: { id: parseInt(userId) } };
+  }
+
+  if (isBookmarked) {
+    action.bookmarkedBy =
+      isBookmarked === "true"
+        ? { connect: { id: parseInt(userId) } }
+        : { disconnect: { id: parseInt(userId) } };
+  }
+
+  const post = await prisma.post.update({
+    where: {
+      id: parseInt(postId),
+    },
+    data: {
+      ...action,
+    },
+  });
+
+  if (!post) return res.sendStatus(500);
+
+  res.send(200);
 };
 
 const getPostById = async (req, res) => {
@@ -82,5 +121,6 @@ export default {
   getPosts,
   getPostById,
   createPost,
+  updatePost,
   deletePost,
 };

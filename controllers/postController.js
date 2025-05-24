@@ -3,7 +3,20 @@ import { PrismaClient } from "../generated/prisma/index.js";
 const prisma = new PrismaClient();
 
 const getPosts = async (req, res) => {
+  const { following } = req.query;
+  const filter = {};
+  if (following === "true") {
+    filter.author = {
+      followers: {
+        some: {
+          followerId: req.user.id,
+        },
+      },
+    };
+  }
+  
   const posts = await prisma.post.findMany({
+    where: filter,
     include: {
       likedBy: {
         select: {

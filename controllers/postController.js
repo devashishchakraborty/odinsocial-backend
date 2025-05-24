@@ -15,6 +15,11 @@ const getPosts = async (req, res) => {
           id: true,
         },
       },
+      comments: {
+        select: {
+          id: true,
+        },
+      },
 
       author: {
         select: {

@@ -15,25 +15,35 @@ datasource db {
 }
 
 model Post {
-  id           Int      @id @default(autoincrement())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id           Int       @id @default(autoincrement())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   content      String
-  published    Boolean  @default(true)
-  author       User     @relation(fields: [authorId], references: [id])
+  published    Boolean   @default(true)
+  author       User      @relation(fields: [authorId], references: [id])
   authorId     Int
-  parentPostId Int?
-  parentPost   Post?    @relation("PostReplies", fields: [parentPostId], references: [id])
-  replies      Post[]   @relation("PostReplies")
-  RootPostId   Int?
-  RootPost     Post?    @relation("PostToRoot", fields: [RootPostId], references: [id])
-  thread       Post[]   @relation("PostToRoot")
-  isThread     Boolean  @default(false)
-  bookmarkedBy User[]   @relation("Bookmarks")
-  likedBy      User[]   @relation("Likes")
+  comments     Comment[]
+  bookmarkedBy User[]    @relation("Bookmarks")
+  likedBy      User[]    @relation("Likes")
+}
 
-  @@index([parentPostId])
-  @@index([RootPostId])
+model Comment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  text      String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+  replies   Reply[]
+}
+
+model Reply {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  text      String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId Int
 }
 
 model Profile {

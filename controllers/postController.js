@@ -67,11 +67,24 @@ const updatePost = async (req, res) => {
     data: {
       ...action,
     },
+    select: {
+      id: true,
+      likedBy: {
+        select: {
+          id: true,
+        },
+      },
+      bookmarkedBy: {
+        select: {
+          id: true,
+        },
+      },
+    },
   });
 
   if (!post) return res.sendStatus(500);
 
-  res.send(200);
+  res.send(post);
 };
 
 const getPostById = async (req, res) => {
@@ -88,12 +101,11 @@ const getPostById = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { content, parentPostId = null } = req.body;
+  const { content } = req.body;
   const post = await prisma.post.create({
     data: {
       content: content,
       authorId: req.user.id,
-      parentPostId: parseInt(parentPostId),
     },
   });
 

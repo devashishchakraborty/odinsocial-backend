@@ -3,9 +3,11 @@ import { PrismaClient } from "../generated/prisma/index.js";
 const prisma = new PrismaClient();
 
 const getPosts = async (req, res) => {
-  const { following } = req.query;
+  const { following, userId } = req.query;
   const filter = {};
-  if (following === "true") {
+
+  if (userId) filter.authorId = parseInt(userId);
+  else if (following === "true") {
     filter.author = {
       followers: {
         some: {
@@ -14,7 +16,7 @@ const getPosts = async (req, res) => {
       },
     };
   }
-  
+
   const posts = await prisma.post.findMany({
     where: filter,
     include: {

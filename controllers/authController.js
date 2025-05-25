@@ -74,12 +74,10 @@ const userLogin = asyncHandler(async (req, res) => {
     id: user.id,
     email: user.email,
     name: user.name,
+    profile: user.profile,
   };
 
-  const accessToken = generateAccessToken({
-    ...payload,
-    profile: user.profile,
-  });
+  const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
   await redisClient.set(`refreshToken:${user.id}`, refreshToken, {
@@ -110,6 +108,7 @@ const refreshToken = asyncHandler(async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      profile: user.profile
     });
     return res.send({ accessToken });
   });

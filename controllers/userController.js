@@ -16,6 +16,7 @@ const getUserById = async (req, res) => {
     },
     select: {
       id: true,
+      createdAt: true,
       name: true,
       email: true,
       posts: true,

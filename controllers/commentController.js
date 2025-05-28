@@ -3,7 +3,7 @@ import { PrismaClient } from "../generated/prisma/index.js";
 const prisma = new PrismaClient();
 
 const getCommentsByPostId = async (req, res) => {
-  const { postId } = res.params;
+  const { postId } = req.params;
   const comments = await prisma.comment.findMany({
     where: {
       postId: parseInt(postId),
@@ -18,7 +18,7 @@ const getCommentsByPostId = async (req, res) => {
 };
 
 const getRepliesByCommentId = async (req, res) => {
-  const { commentId } = res.params;
+  const { commentId } = req.params;
   const replies = await prisma.reply.findMany({
     where: {
       commentId: parseInt(commentId),

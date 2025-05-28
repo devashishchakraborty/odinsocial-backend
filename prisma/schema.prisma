@@ -34,6 +34,9 @@ model Comment {
   text      String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    Int
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+  likedBy   User[]   @relation("CommentLikes")
   replies   Reply[]
 }
 
@@ -42,7 +45,10 @@ model Reply {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   text      String
-  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+  likedBy   User[]   @relation("ReplyLikes")
+  comment   Comment  @relation(fields: [commentId], references: [id])
   commentId Int
 }
 
@@ -55,17 +61,21 @@ model Profile {
 }
 
 model User {
-  id              Int      @id @default(autoincrement())
-  createdAt       DateTime @default(now())
-  email           String   @unique
+  id              Int       @id @default(autoincrement())
+  createdAt       DateTime  @default(now())
+  email           String    @unique
   name            String
   password        String
   posts           Post[]
+  comments        Comment[]
+  replies         Reply[]
   profile         Profile?
-  bookmarkedPosts Post[]   @relation("Bookmarks")
-  likedPosts      Post[]   @relation("Likes")
-  following       Follow[] @relation("FollowingRelation")
-  followers       Follow[] @relation("FollowerRelation")
+  bookmarkedPosts Post[]    @relation("Bookmarks")
+  likedPosts      Post[]    @relation("Likes")
+  likedComments   Comment[] @relation("CommentLikes")
+  likedReplies    Reply[]   @relation("ReplyLikes")
+  following       Follow[]  @relation("FollowingRelation")
+  followers       Follow[]  @relation("FollowerRelation")
 }
 
 model Follow {

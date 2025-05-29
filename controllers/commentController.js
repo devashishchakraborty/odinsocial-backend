@@ -2,11 +2,45 @@ import { PrismaClient } from "../generated/prisma/index.js";
 
 const prisma = new PrismaClient();
 
+const createComment = async (req, res) => {
+  const { postId } = req.params;
+  const { newComment } = req.body;
+  const comment = await prisma.comment.create({
+    data: {
+      text: newComment,
+      postId: parseInt(postId),
+      authorId: req.user.id,
+    },
+  });
+  if (!comment) {
+    return res.sendStatus(500);
+  }
+
+  res.send(comment);
+};
+
 const getCommentsByPostId = async (req, res) => {
   const { postId } = req.params;
   const comments = await prisma.comment.findMany({
     where: {
       postId: parseInt(postId),
+    },
+    include: {
+      author: {
+        include: {
+          profile: true,
+        },
+      },
+      likedBy: {
+        select: {
+          id: true,
+        },
+      },
+      replies: {
+        select: {
+          id: true
+        }
+      }
     },
   });
 
@@ -32,4 +66,4 @@ const getRepliesByCommentId = async (req, res) => {
   res.send(replies);
 };
 
-export default { getCommentsByPostId, getRepliesByCommentId };
+export default { getCommentsByPostId, getRepliesByCommentId, createComment };

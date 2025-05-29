@@ -11,6 +11,15 @@ const createComment = async (req, res) => {
       postId: parseInt(postId),
       authorId: req.user.id,
     },
+    include: {
+      author: {
+        include: {
+          profile: true
+        } 
+      },
+      likedBy: true,
+      replies: true,
+    },
   });
   if (!comment) {
     return res.sendStatus(500);

@@ -38,9 +38,9 @@ const getCommentsByPostId = async (req, res) => {
       },
       replies: {
         select: {
-          id: true
-        }
-      }
+          id: true,
+        },
+      },
     },
   });
 
@@ -66,4 +66,31 @@ const getRepliesByCommentId = async (req, res) => {
   res.send(replies);
 };
 
-export default { getCommentsByPostId, getRepliesByCommentId, createComment };
+const updateComment = async (req, res) => {
+  const { commentId } = req.params;
+  const { isLiked } = req.body;
+  let action = {};
+
+  if (isLiked) {
+    action.likedBy =
+      isLiked === "true"
+        ? { connect: { id: req.user.id } }
+        : { disconnect: { id: req.user.id } };
+  }
+
+  const comment = await prisma.comment.update({
+    where: { id: parseInt(commentId) },
+    data: action,
+  });
+
+  if (!comment) return res.sendStatus(500);
+
+  res.send(comment);
+};
+
+export default {
+  getCommentsByPostId,
+  getRepliesByCommentId,
+  createComment,
+  updateComment,
+};

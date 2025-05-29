@@ -89,25 +89,8 @@ const updatePost = async (req, res) => {
   }
 
   const post = await prisma.post.update({
-    where: {
-      id: parseInt(postId),
-    },
-    data: {
-      ...action,
-    },
-    select: {
-      id: true,
-      likedBy: {
-        select: {
-          id: true,
-        },
-      },
-      bookmarkedBy: {
-        select: {
-          id: true,
-        },
-      },
-    },
+    where: { id: parseInt(postId) },
+    data: action,
   });
 
   if (!post) return res.sendStatus(500);
@@ -151,7 +134,6 @@ const getPostById = async (req, res) => {
         },
       },
     },
-
   });
 
   if (!post) return res.sendStatus(500);

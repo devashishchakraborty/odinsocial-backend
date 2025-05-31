@@ -22,6 +22,7 @@ app.use(cors({
 app.use(routes.authRouter);
 app.use("/posts", authenticateJWT, routes.postRouter);
 app.use("/users", authenticateJWT, routes.userRouter);
+app.use("/comments", authenticateJWT, routes.commentRouter)
 
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;

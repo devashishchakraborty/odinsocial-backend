@@ -1,8 +1,9 @@
 import { PrismaClient } from "../generated/prisma/index.js";
+import expressAsyncHandler from "express-async-handler";
 
 const prisma = new PrismaClient();
 
-const getPosts = async (req, res) => {
+const getPosts = expressAsyncHandler(async (req, res) => {
   const { following, userId, showBookmarks } = req.query;
   const filter = {};
 
@@ -62,14 +63,10 @@ const getPosts = async (req, res) => {
     },
   });
 
-  if (!posts) {
-    return res.sendStatus(500);
-  }
-
   res.send(posts);
-};
+});
 
-const updatePost = async (req, res) => {
+const updatePost = expressAsyncHandler(async (req, res) => {
   const { postId } = req.params;
   const { isLiked, isBookmarked } = req.body;
   let action = {};
@@ -93,12 +90,12 @@ const updatePost = async (req, res) => {
     data: action,
   });
 
-  if (!post) return res.sendStatus(500);
+  if (!post) return res.sendStatus(404);
 
-  res.send(post);
-};
+  return res.sendStatus(204);
+});
 
-const getPostById = async (req, res) => {
+const getPostById = expressAsyncHandler(async (req, res) => {
   const { postId } = req.params;
   const post = await prisma.post.findUnique({
     where: {
@@ -136,13 +133,15 @@ const getPostById = async (req, res) => {
     },
   });
 
-  if (!post) return res.sendStatus(500);
+  if (!post) return res.sendStatus(404);
 
   res.send(post);
-};
+});
 
-const createPost = async (req, res) => {
+const createPost = expressAsyncHandler(async (req, res) => {
   const { content } = req.body;
+
+  if (content.length === 0) return res.status(400).send({ message: "Empty post content." }) 
   const post = await prisma.post.create({
     data: {
       content: content,
@@ -154,10 +153,10 @@ const createPost = async (req, res) => {
     return res.sendStatus(500);
   }
 
-  res.send(post);
-};
+  res.status(201).send(post);
+});
 
-const deletePost = async (req, res) => {
+const deletePost = expressAsyncHandler(async (req, res) => {
   const { postId } = res.params;
   const post = await prisma.post.delete({
     where: {
@@ -167,8 +166,8 @@ const deletePost = async (req, res) => {
   });
 
   if (!post) return res.sendStatus(500);
-  res.send(post);
-};
+  res.sendStatus(204);
+});
 
 export default {
   getPosts,

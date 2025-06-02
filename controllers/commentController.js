@@ -17,7 +17,11 @@ const createComment = async (req, res) => {
           profile: true,
         },
       },
-      likedBy: true,
+      likedBy: {
+        select: {
+          id: true,
+        },
+      },
       replies: true,
     },
   });
@@ -57,16 +61,17 @@ const getCommentsByPostId = async (req, res) => {
     return res.sendStatus(500);
   }
 
-  res.send(comments);
+  res.status(201).send(comments);
 };
 
 const createReply = async (req, res) => {
   const { commentId } = req.params;
   const { newReply } = req.body;
+  
   const reply = await prisma.reply.create({
     data: {
       text: newReply,
-      postId: parseInt(commentId),
+      commentId: parseInt(commentId),
       authorId: req.user.id,
     },
     include: {
@@ -75,15 +80,18 @@ const createReply = async (req, res) => {
           profile: true,
         },
       },
-      likedBy: true,
-      replies: true,
+      likedBy: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
   if (!reply) {
     return res.sendStatus(500);
   }
 
-  res.send(reply);
+  res.status(201).send(reply);
 };
 
 const getRepliesByCommentId = async (req, res) => {

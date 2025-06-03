@@ -48,7 +48,7 @@ model Reply {
   author    User     @relation(fields: [authorId], references: [id])
   authorId  Int
   likedBy   User[]   @relation("ReplyLikes")
-  comment   Comment  @relation(fields: [commentId], references: [id])
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId Int
 }
 

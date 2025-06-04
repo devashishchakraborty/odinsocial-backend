@@ -8,5 +8,6 @@ commentRouter.get(
 );
 commentRouter.post("/:commentId/replies", commentController.createReply);
 commentRouter.put("/:commentId", commentController.updateComment);
+commentRouter.put("/replies/:replyId", commentController.updateReply);
 
 export default commentRouter;

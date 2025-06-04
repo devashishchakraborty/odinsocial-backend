@@ -67,7 +67,7 @@ const getCommentsByPostId = async (req, res) => {
 const createReply = async (req, res) => {
   const { commentId } = req.params;
   const { newReply } = req.body;
-  
+
   const reply = await prisma.reply.create({
     data: {
       text: newReply,
@@ -121,6 +121,28 @@ const getRepliesByCommentId = async (req, res) => {
   res.send(replies);
 };
 
+const updateReply = async (req, res) => {
+  const { replyId } = req.params;
+  const { isLiked } = req.body;
+  let action = {};
+
+  if (isLiked) {
+    action.likedBy =
+      isLiked === "true"
+        ? { connect: { id: req.user.id } }
+        : { disconnect: { id: req.user.id } };
+  }
+
+  const reply = await prisma.reply.update({
+    where: { id: parseInt(replyId) },
+    data: action,
+  });
+
+  if (!reply) return res.sendStatus(500);
+
+  res.sendStatus(200);
+};
+
 const updateComment = async (req, res) => {
   const { commentId } = req.params;
   const { isLiked } = req.body;
@@ -140,13 +162,14 @@ const updateComment = async (req, res) => {
 
   if (!comment) return res.sendStatus(500);
 
-  res.send(comment);
+  res.sendStatus(200);
 };
 
 export default {
   getCommentsByPostId,
   createReply,
   getRepliesByCommentId,
+  updateReply,
   createComment,
   updateComment,
 };

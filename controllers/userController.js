@@ -4,7 +4,19 @@ import expressAsyncHandler from "express-async-handler";
 const prisma = new PrismaClient();
 
 const getUsers = expressAsyncHandler(async (req, res) => {
-  const users = await prisma.user.findMany();
+  const users = await prisma.user.findMany({
+    where: {
+      id: {
+        not: req.user.id,
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      profile: true,
+    },
+  });
   if (!users) return res.sendStatus(500);
   res.send(users);
 });
@@ -20,7 +32,6 @@ const getUserById = expressAsyncHandler(async (req, res) => {
       createdAt: true,
       name: true,
       email: true,
-      posts: true,
       profile: true,
       _count: {
         select: {

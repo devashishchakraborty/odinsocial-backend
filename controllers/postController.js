@@ -141,11 +141,42 @@ const getPostById = expressAsyncHandler(async (req, res) => {
 const createPost = expressAsyncHandler(async (req, res) => {
   const { content } = req.body;
 
-  if (content.length === 0) return res.status(400).send({ message: "Empty post content." }) 
+  if (content.length === 0)
+    return res.status(400).send({ message: "Empty post content." });
   const post = await prisma.post.create({
     data: {
       content: content,
       authorId: req.user.id,
+    },
+    include: {
+      likedBy: {
+        select: {
+          id: true,
+        },
+      },
+      bookmarkedBy: {
+        select: {
+          id: true,
+        },
+      },
+      comments: {
+        select: {
+          id: true,
+        },
+      },
+
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          profile: {
+            select: {
+              imageUrl: true,
+            },
+          },
+        },
+      },
     },
   });
 

@@ -25,6 +25,8 @@ model Post {
   comments     Comment[]
   bookmarkedBy User[]    @relation("Bookmarks")
   likedBy      User[]    @relation("Likes")
+
+  @@index([authorId])
 }
 
 model Comment {
@@ -38,6 +40,8 @@ model Comment {
   authorId  Int
   likedBy   User[]   @relation("CommentLikes")
   replies   Reply[]
+
+  @@index([authorId])
 }
 
 model Reply {
@@ -50,6 +54,8 @@ model Reply {
   likedBy   User[]   @relation("ReplyLikes")
   comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId Int
+
+  @@index([authorId])
 }
 
 model Profile {
@@ -74,16 +80,6 @@ model User {
   likedPosts      Post[]    @relation("Likes")
   likedComments   Comment[] @relation("CommentLikes")
   likedReplies    Reply[]   @relation("ReplyLikes")
-  following       Follow[]  @relation("FollowingRelation")
-  followers       Follow[]  @relation("FollowerRelation")
-}
-
-model Follow {
-  id          Int  @id @default(autoincrement())
-  follower    User @relation("FollowingRelation", fields: [followerId], references: [id])
-  followerId  Int
-  following   User @relation("FollowerRelation", fields: [followingId], references: [id])
-  followingId Int
-
-  @@unique([followerId, followingId])
+  following User[] @relation("UserFollows")
+  followers User[] @relation("UserFollows")
 }

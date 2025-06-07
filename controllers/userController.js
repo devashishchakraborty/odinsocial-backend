@@ -4,10 +4,13 @@ import expressAsyncHandler from "express-async-handler";
 const prisma = new PrismaClient();
 
 const getUsers = expressAsyncHandler(async (req, res) => {
+  const { excludeUserId } = req.query;
+  let filter = [req.user.id];
+  if (excludeUserId) filter.push(parseInt(excludeUserId));
   const users = await prisma.user.findMany({
     where: {
       id: {
-        not: req.user.id,
+        notIn: filter,
       },
     },
     select: {
@@ -33,23 +36,60 @@ const getUserById = expressAsyncHandler(async (req, res) => {
       name: true,
       email: true,
       profile: true,
-      _count: {
+      followers: {
         select: {
-          followers: true,
-          following: true,
+          id: true,
+        },
+      },
+      following: {
+        select: {
+          id: true,
         },
       },
     },
   });
 
   if (!user) {
-    return res.sendStatus(500);
+    return res.sendStatus(404);
   }
 
   res.send(user);
 });
 
+const toggleFollow = expressAsyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { action } = req.body;
+
+  let following = {};
+
+  if (!["FOLLOW", "UNFOLLOW"].includes(action)) {
+    return res.sendStatus(400);
+  }
+
+  if (action === "FOLLOW") {
+    following = { connect: { id: parseInt(userId) } };
+  } else if (action === "UNFOLLOW") {
+    following = { disconnect: { id: parseInt(userId) } };
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { following },
+  });
+
+  if (!user) return res.sendStatus(404);
+
+  return res.sendStatus(204);
+});
+
+const getFollowers = expressAsyncHandler(async (req, res) => {});
+
+const getFollowing = expressAsyncHandler(async (req, res) => {});
+
 export default {
   getUsers,
   getUserById,
+  toggleFollow,
+  getFollowers,
+  getFollowing,
 };

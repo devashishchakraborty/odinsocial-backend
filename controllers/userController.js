@@ -12,12 +12,22 @@ const getUsers = expressAsyncHandler(async (req, res) => {
       id: {
         notIn: filter,
       },
+      followers: {
+        none: {
+          id: req.user.id,
+        },
+      },
     },
     select: {
       id: true,
       name: true,
       email: true,
       profile: true,
+      followers: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
   if (!users) return res.sendStatus(500);

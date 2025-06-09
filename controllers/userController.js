@@ -92,6 +92,35 @@ const toggleFollow = expressAsyncHandler(async (req, res) => {
   return res.sendStatus(204);
 });
 
+const editProfile = expressAsyncHandler(async (req, res) => {
+  const { name, bio, location } = req.body;
+
+  if (!name && !bio && !location) {
+    return res
+      .status(400)
+      .json({ message: "At least one field must be provided" });
+  }
+  const user = await prisma.user.update({
+    where: { id: req.user.id },
+    data: {
+      ...(name && { name }), // Only update if provided
+      profile: {
+        update: {
+          // Using update instead of direct assignment
+          ...(bio && { bio }),
+          ...(location && { location }),
+        },
+      },
+    },
+    include: {
+      profile: true,
+    },
+  });
+  if (!user) return res.sendStatus(404);
+
+  return res.sendStatus(204);
+});
+
 const getFollowers = expressAsyncHandler(async (req, res) => {
   const { userId } = req.params;
   const users = await prisma.user.findMany({
@@ -150,4 +179,5 @@ export default {
   toggleFollow,
   getFollowers,
   getFollowing,
+  editProfile,
 };

@@ -92,9 +92,57 @@ const toggleFollow = expressAsyncHandler(async (req, res) => {
   return res.sendStatus(204);
 });
 
-const getFollowers = expressAsyncHandler(async (req, res) => {});
+const getFollowers = expressAsyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const users = await prisma.user.findMany({
+    where: {
+      following: {
+        some: {
+          id: parseInt(userId),
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      profile: true,
+      followers: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+  if (!users) return res.sendStatus(500);
+  res.send(users);
+});
 
-const getFollowing = expressAsyncHandler(async (req, res) => {});
+const getFollowing = expressAsyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const users = await prisma.user.findMany({
+    where: {
+      followers: {
+        some: {
+          id: parseInt(userId),
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      profile: true,
+      followers: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+  if (!users) return res.sendStatus(500);
+  res.send(users);
+});
 
 export default {
   getUsers,

@@ -13,7 +13,7 @@ const getPosts = expressAsyncHandler(async (req, res) => {
     filter.author = {
       followers: {
         some: {
-          followerId: req.user.id,
+          id: req.user.id,
         },
       },
     };

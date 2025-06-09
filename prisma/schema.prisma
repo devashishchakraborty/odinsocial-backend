@@ -62,6 +62,7 @@ model Profile {
   id       Int     @id @default(autoincrement())
   bio      String?
   imageUrl String?
+  location String  @default("India")
   user     User    @relation(fields: [userId], references: [id])
   userId   Int     @unique
 }
@@ -80,6 +81,6 @@ model User {
   likedPosts      Post[]    @relation("Likes")
   likedComments   Comment[] @relation("CommentLikes")
   likedReplies    Reply[]   @relation("ReplyLikes")
-  following User[] @relation("UserFollows")
-  followers User[] @relation("UserFollows")
+  following       User[]    @relation("UserFollows")
+  followers       User[]    @relation("UserFollows")
 }

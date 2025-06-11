@@ -7,7 +7,7 @@ import redisClient from "../config/redisClient.js";
 const prisma = new PrismaClient();
 
 const getUsers = expressAsyncHandler(async (req, res) => {
-  const { excludeUserId } = req.query;
+  const { excludeUserId, userCount } = req.query;
   let filter = [req.user.id];
   if (excludeUserId) filter.push(parseInt(excludeUserId));
   const users = await prisma.user.findMany({
@@ -21,6 +21,7 @@ const getUsers = expressAsyncHandler(async (req, res) => {
         },
       },
     },
+    ...(userCount && { take: parseInt(userCount) }),
     select: {
       id: true,
       name: true,
@@ -117,7 +118,7 @@ const toggleFollow = expressAsyncHandler(async (req, res) => {
 
   if (!user) return res.sendStatus(404);
 
-  await redisClient.set(`user:${userId}`, JSON.stringify(user), {
+  await redisClient.set(`user:${req.user.id}`, JSON.stringify(user), {
     EX: 24 * 60 * 60, // 1 day in seconds
   });
 

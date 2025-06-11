@@ -1,5 +1,6 @@
 import { PrismaClient } from "../generated/prisma/index.js";
 import expressAsyncHandler from "express-async-handler";
+import redisClient from "../config/redisClient.js";
 
 const prisma = new PrismaClient();
 
@@ -88,15 +89,53 @@ const updatePost = expressAsyncHandler(async (req, res) => {
   const post = await prisma.post.update({
     where: { id: parseInt(postId) },
     data: action,
+    include: {
+      likedBy: {
+        select: {
+          id: true,
+        },
+      },
+      bookmarkedBy: {
+        select: {
+          id: true,
+        },
+      },
+      comments: {
+        select: {
+          id: true,
+        },
+      },
+
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          profile: {
+            select: {
+              imageUrl: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!post) return res.sendStatus(404);
+
+  await redisClient.set(`post:${post.id}`, JSON.stringify(post), {
+    EX: 24 * 60 * 60, // 1 day in seconds
+  });
 
   return res.sendStatus(204);
 });
 
 const getPostById = expressAsyncHandler(async (req, res) => {
   const { postId } = req.params;
+
+  const postCache = await redisClient.get(`post:${postId}`);
+  if (postCache) return res.send(JSON.parse(postCache));
+
   const post = await prisma.post.findUnique({
     where: {
       id: parseInt(postId),
@@ -131,6 +170,10 @@ const getPostById = expressAsyncHandler(async (req, res) => {
         },
       },
     },
+  });
+
+  await redisClient.set(`post:${post.id}`, JSON.stringify(post), {
+    EX: 24 * 60 * 60, // 1 day in seconds
   });
 
   if (!post) return res.sendStatus(404);
@@ -197,6 +240,9 @@ const deletePost = expressAsyncHandler(async (req, res) => {
   });
 
   if (!post) return res.sendStatus(500);
+
+  await redisClient.del(`post:${post.id}`);
+
   res.sendStatus(204);
 });
 

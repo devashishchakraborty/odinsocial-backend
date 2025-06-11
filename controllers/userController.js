@@ -2,6 +2,7 @@ import { PrismaClient } from "../generated/prisma/index.js";
 import expressAsyncHandler from "express-async-handler";
 import upload from "../middlewares/multer.js";
 import cloudinary from "../config/cloudinary.js";
+import redisClient from "../config/redisClient.js";
 
 const prisma = new PrismaClient();
 
@@ -38,6 +39,10 @@ const getUsers = expressAsyncHandler(async (req, res) => {
 
 const getUserById = expressAsyncHandler(async (req, res) => {
   const { userId } = req.params;
+
+  const userCache = await redisClient.get(`user:${userId}`);
+  if (userCache) return res.send(JSON.parse(userCache));
+
   const user = await prisma.user.findUnique({
     where: {
       id: parseInt(userId),
@@ -65,6 +70,10 @@ const getUserById = expressAsyncHandler(async (req, res) => {
     return res.sendStatus(404);
   }
 
+  await redisClient.set(`user:${userId}`, JSON.stringify(user), {
+    EX: 24 * 60 * 60, // 1 day in seconds
+  });
+
   res.send(user);
 });
 
@@ -87,9 +96,30 @@ const toggleFollow = expressAsyncHandler(async (req, res) => {
   const user = await prisma.user.update({
     where: { id: req.user.id },
     data: { following },
+    select: {
+      id: true,
+      createdAt: true,
+      name: true,
+      email: true,
+      profile: true,
+      followers: {
+        select: {
+          id: true,
+        },
+      },
+      following: {
+        select: {
+          id: true,
+        },
+      },
+    },
   });
 
   if (!user) return res.sendStatus(404);
+
+  await redisClient.set(`user:${userId}`, JSON.stringify(user), {
+    EX: 24 * 60 * 60, // 1 day in seconds
+  });
 
   return res.sendStatus(204);
 });
@@ -114,11 +144,29 @@ const editProfile = expressAsyncHandler(async (req, res) => {
         },
       },
     },
-    include: {
+    select: {
+      id: true,
+      createdAt: true,
+      name: true,
+      email: true,
       profile: true,
+      followers: {
+        select: {
+          id: true,
+        },
+      },
+      following: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
   if (!user) return res.sendStatus(404);
+
+  await redisClient.set(`user:${req.user.id}`, JSON.stringify(user), {
+    EX: 24 * 60 * 60, // 1 day in seconds
+  });
 
   return res.sendStatus(204);
 });
@@ -199,6 +247,7 @@ const uploadImage = [
                   imageUrl: result.secure_url,
                 },
               });
+              await redisClient.del(`user:${req.user.id}`);
             };
 
             updateProfilePicture();

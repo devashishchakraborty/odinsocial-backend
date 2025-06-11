@@ -1,5 +1,7 @@
 import { PrismaClient } from "../generated/prisma/index.js";
 import expressAsyncHandler from "express-async-handler";
+import upload from "../middlewares/multer.js";
+import cloudinary from "../config/cloudinary.js";
 
 const prisma = new PrismaClient();
 
@@ -173,6 +175,44 @@ const getFollowing = expressAsyncHandler(async (req, res) => {
   res.send(users);
 });
 
+const uploadImage = [
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const result = await cloudinary.uploader
+        .upload_stream(
+          {
+            folder: `odinsocial/user-${req.user.id}`,
+            public_id: "image", // ← this sets the file name (without extension)
+            overwrite: true, // optional: overwrite if a file with the same name exists
+            resource_type: "image", // optional but safe
+          },
+          (error, result) => {
+            if (error) return res.status(500).json({ error: error.message });
+
+            const updateProfilePicture = async () => {
+              await prisma.profile.update({
+                where: {
+                  userId: req.user.id,
+                },
+                data: {
+                  imageUrl: result.secure_url,
+                },
+              });
+            };
+
+            updateProfilePicture();
+
+            return res.status(200).json({ url: result.secure_url });
+          }
+        )
+        .end(req.file.buffer);
+    } catch (err) {
+      res.status(500).json({ error: "Upload failed" });
+    }
+  },
+];
+
 export default {
   getUsers,
   getUserById,
@@ -180,4 +220,5 @@ export default {
   getFollowers,
   getFollowing,
   editProfile,
+  uploadImage,
 };

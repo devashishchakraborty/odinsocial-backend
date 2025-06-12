@@ -5,7 +5,7 @@ import redisClient from "../config/redisClient.js";
 const prisma = new PrismaClient();
 
 const getPosts = expressAsyncHandler(async (req, res) => {
-  const { following, userId, showBookmarks } = req.query;
+  const { following, userId, showBookmarks, search } = req.query;
   const filter = {};
 
   if (userId) filter.authorId = parseInt(userId); // Posts by User Id
@@ -24,6 +24,12 @@ const getPosts = expressAsyncHandler(async (req, res) => {
       some: {
         id: req.user.id,
       },
+    };
+  } else if (search) {
+    // To get posts by search query
+    filter.content = {
+      contains: search,
+      mode: "insensitive",
     };
   }
 

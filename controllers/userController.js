@@ -7,7 +7,7 @@ import redisClient from "../config/redisClient.js";
 const prisma = new PrismaClient();
 
 const getUsers = expressAsyncHandler(async (req, res) => {
-  const { excludeUserId, userCount } = req.query;
+  const { excludeUserId, userCount, search } = req.query;
   let filter = [req.user.id];
   if (excludeUserId) filter.push(parseInt(excludeUserId));
   const users = await prisma.user.findMany({
@@ -15,11 +15,38 @@ const getUsers = expressAsyncHandler(async (req, res) => {
       id: {
         notIn: filter,
       },
-      followers: {
-        none: {
-          id: req.user.id,
-        },
-      },
+      ...(search
+        ? {
+            OR: [
+              {
+                name: {
+                  contains: search,
+                  mode: "insensitive",
+                },
+              },
+              {
+                email: {
+                  contains: search,
+                  mode: "insensitive",
+                },
+              },
+              {
+                profile: {
+                  bio: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            ],
+          }
+        : {
+            followers: {
+              none: {
+                id: req.user.id,
+              },
+            },
+          }),
     },
     ...(userCount && { take: parseInt(userCount) }),
     select: {

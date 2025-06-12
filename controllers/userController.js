@@ -32,9 +32,11 @@ const getUsers = expressAsyncHandler(async (req, res) => {
               },
               {
                 profile: {
-                  bio: {
-                    contains: search,
-                    mode: "insensitive",
+                  is: {
+                    bio: {
+                      contains: search,
+                      mode: "insensitive",
+                    },
                   },
                 },
               },

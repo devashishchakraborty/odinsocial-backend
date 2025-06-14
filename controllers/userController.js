@@ -7,7 +7,7 @@ import redisClient from "../config/redisClient.js";
 const prisma = new PrismaClient();
 
 const getUsers = expressAsyncHandler(async (req, res) => {
-  const { excludeUserId, userCount, search } = req.query;
+  const { excludeUserId, userCount, search, getMessages } = req.query;
   let filter = [req.user.id];
   if (excludeUserId) filter.push(parseInt(excludeUserId));
   const users = await prisma.user.findMany({
@@ -15,42 +15,47 @@ const getUsers = expressAsyncHandler(async (req, res) => {
       id: {
         notIn: filter,
       },
-      ...(search
-        ? {
-            OR: [
-              {
-                name: {
+
+      // If there is a query to search from users
+      ...(search && {
+        OR: [
+          {
+            name: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            profile: {
+              is: {
+                bio: {
                   contains: search,
                   mode: "insensitive",
                 },
-              },
-              {
-                email: {
-                  contains: search,
-                  mode: "insensitive",
-                },
-              },
-              {
-                profile: {
-                  is: {
-                    bio: {
-                      contains: search,
-                      mode: "insensitive",
-                    },
-                  },
-                },
-              },
-            ],
-          }
-        : {
-            followers: {
-              none: {
-                id: req.user.id,
               },
             },
-          }),
+          },
+        ],
+      }),
+      // Filter out followers only if getMessages is false.
+      ...(!getMessages && {
+        followers: {
+          none: {
+            id: req.user.id,
+          },
+        },
+      }),
     },
+
+    // If number of users required by client
     ...(userCount && { take: parseInt(userCount) }),
+
     select: {
       id: true,
       name: true,
@@ -61,9 +66,53 @@ const getUsers = expressAsyncHandler(async (req, res) => {
           id: true,
         },
       },
+
+      // Send messages along with user if asked in query
+      ...(getMessages && {
+        messagesSent: {
+          where: {
+            receiverId: req.user.id,
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+        messagesReceived: {
+          where: {
+            authorId: req.user.id,
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      }),
     },
   });
   if (!users) return res.sendStatus(500);
+
+  if (getMessages) {
+    const usersWithLatestMessage = users.map((user) => {
+      const sent = user.messagesSent[0];
+      const received = user.messagesReceived[0];
+
+      let latestMessage = null;
+      if (sent && received) {
+        latestMessage = sent.createdAt > received.createdAt ? sent : received;
+      } else {
+        latestMessage = sent || received || null;
+      }
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profile: user.profile,
+        followers: user.followers,
+        latestMessage,
+      };
+    });
+
+    return res.send(usersWithLatestMessage);
+  }
+
   res.send(users);
 });
 

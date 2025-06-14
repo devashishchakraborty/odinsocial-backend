@@ -68,19 +68,31 @@ model Profile {
 }
 
 model User {
-  id              Int       @id @default(autoincrement())
-  createdAt       DateTime  @default(now())
-  email           String    @unique
-  name            String
-  password        String
-  posts           Post[]
-  comments        Comment[]
-  replies         Reply[]
-  profile         Profile?
-  bookmarkedPosts Post[]    @relation("Bookmarks")
-  likedPosts      Post[]    @relation("Likes")
-  likedComments   Comment[] @relation("CommentLikes")
-  likedReplies    Reply[]   @relation("ReplyLikes")
-  following       User[]    @relation("UserFollows")
-  followers       User[]    @relation("UserFollows")
+  id               Int       @id @default(autoincrement())
+  createdAt        DateTime  @default(now())
+  email            String    @unique
+  name             String
+  password         String
+  posts            Post[]
+  comments         Comment[]
+  replies          Reply[]
+  profile          Profile?
+  bookmarkedPosts  Post[]    @relation("Bookmarks")
+  likedPosts       Post[]    @relation("Likes")
+  likedComments    Comment[] @relation("CommentLikes")
+  likedReplies     Reply[]   @relation("ReplyLikes")
+  following        User[]    @relation("UserFollows")
+  followers        User[]    @relation("UserFollows")
+  messagesSent     Message[] @relation("Author")
+  messagesReceived Message[] @relation("Receiver")
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  text       String
+  authorId   Int
+  author     User     @relation("Author", fields: [authorId], references: [id])
+  receiverId Int
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
 }

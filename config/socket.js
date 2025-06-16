@@ -26,6 +26,7 @@ const configureSocket = (io) => {
     // Join a room (e.g., private chat between two users)
     socket.on("join room", ({ senderId, receiverId }) => {
       const roomId = [senderId, receiverId].sort().join("-");
+      console.log("Joined Room:", roomId);
       socket.join(roomId);
     });
 

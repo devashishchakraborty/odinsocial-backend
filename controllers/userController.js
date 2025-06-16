@@ -162,14 +162,18 @@ const toggleFollow = expressAsyncHandler(async (req, res) => {
 
   let following = {};
 
+  let followingUserCache = JSON.parse(await redisClient.get(`user:${userId}`));
+
   if (!["FOLLOW", "UNFOLLOW"].includes(action)) {
     return res.sendStatus(400);
   }
 
   if (action === "FOLLOW") {
     following = { connect: { id: parseInt(userId) } };
+    followingUserCache.followers.push({id: req.user.id});
   } else if (action === "UNFOLLOW") {
     following = { disconnect: { id: parseInt(userId) } };
+    followingUserCache.followers = followingUserCache.followers.filter((follower) => follower.id != req.user.id)
   }
 
   const user = await prisma.user.update({
@@ -197,6 +201,10 @@ const toggleFollow = expressAsyncHandler(async (req, res) => {
   if (!user) return res.sendStatus(404);
 
   await redisClient.set(`user:${req.user.id}`, JSON.stringify(user), {
+    EX: 24 * 60 * 60, // 1 day in seconds
+  });
+
+  await redisClient.set(`user:${userId}`, JSON.stringify(followingUserCache), {
     EX: 24 * 60 * 60, // 1 day in seconds
   });
 
